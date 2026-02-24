@@ -121,6 +121,58 @@ Live deploys:    v{major}.{minor}.{patch}               (e.g., v1.2.0)
 
 ---
 
+## Linear Project Setup (MANDATORY per Project)
+
+**Every new project MUST get its own dedicated Linear project.** Never add issues to a general/shared project. Each project is self-contained with its own milestones, issues, and tracking.
+
+### PM Creates Linear Project at Phase 1 (After PRD)
+```
+PM: Create a NEW Linear project for this project:
+  1. Create project: "[Project Name]" with description
+  2. Create milestones matching workflow phases:
+     - Milestone: "Phase 1 - Requirements & Design"
+     - Milestone: "Phase 2 - Development"
+     - Milestone: "Phase 3 - Security Review"
+     - Milestone: "Phase 4 - Staging & QA"
+     - Milestone: "Phase 5 - Production Release"
+  3. Create issues from PRD user stories (each with acceptance criteria)
+  4. Create issues for technical tasks (from Tech Lead's architecture)
+  5. Assign issues to milestones
+  6. Set issue priorities and dependencies
+```
+
+### Issue Types (All in Project-Specific Linear Project)
+| Type | Created By | Example |
+|------|-----------|---------|
+| User Story | PM | "As a user, I want to login with Google" |
+| Technical Task | Tech Lead | "Set up database schema for users table" |
+| Design Task | UX Designer | "Create login page wireframe in Figma" |
+| Challenge | Devil's Advocate | "PRD missing error handling for expired tokens" |
+| Security Finding | Security Engineer | "SQL injection risk in search endpoint" |
+| Bug | QA Lead | "Login button unresponsive on mobile Safari" |
+| Gate Decision | PM/Security/QA | "DESIGN APPROVED" / "SECURITY APPROVED" / "QA APPROVED" |
+| Infrastructure | DevOps | "Set up staging environment CI/CD" |
+
+### Linear Project Checklist
+- [ ] New Linear project created (NOT in existing/general project)
+- [ ] Project description matches PRD overview
+- [ ] Milestones created for each workflow phase
+- [ ] All PRD user stories converted to Linear issues with acceptance criteria
+- [ ] Issues assigned to correct milestones
+- [ ] Priorities set (Critical/High/Medium/Low)
+- [ ] Dependencies between issues configured
+- [ ] All gate decisions tracked as Linear issues (Design Review, Security, QA)
+- [ ] All teammates know the project name and can find it in Linear
+
+### Checking for Existing Projects
+Before creating a new Linear project:
+1. **Search Linear** for any existing project with the same or similar name
+2. **If found:** Ask PM/CEO whether to continue in existing project or create new
+3. **If new:** Always create a fresh project - never mix projects
+4. **Archive old:** When a project is complete, archive it in Linear (don't delete)
+
+---
+
 ## Team Structure (11 Roles)
 
 ### Management Layer

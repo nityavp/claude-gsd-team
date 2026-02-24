@@ -78,7 +78,8 @@ GITHUB REPO & ENVIRONMENTS:
 WORKFLOW ENFORCEMENT:
 - DevOps creates GitHub repo + branches (develop/staging/main) + protection rules at project start
 - PM must finish PRD (incl. analytics tracking plan) before UX and Tech Lead can start
-- PM creates Linear project with milestones and issues from user stories
+- PM creates a NEW dedicated Linear project (search first - if exists, confirm with CEO whether to reuse or create new; NEVER add to general/shared project)
+- PM creates milestones (Requirements → Development → Security → Staging & QA → Production) and issues from user stories
 - Devil's Advocate reviews PRD BEFORE UX and Tech Lead start (challenges scope, gaps, assumptions)
 - UX Designer CREATES wireframes in Figma incl. ALL states (happy, error, empty, loading)
 - PM MUST approve designs before Frontend Dev starts (DESIGN REVIEW GATE 🔒)

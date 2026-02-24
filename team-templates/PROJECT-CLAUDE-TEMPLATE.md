@@ -118,7 +118,13 @@ For every component, feature, or technical decision:
 ### Phase 1: Requirements & Design
 1. **PM researches** existing products/solutions in the problem space
 2. **PM writes PRD** with user stories, acceptance criteria, "Solutions Evaluated" section, AND **analytics tracking plan** (events, properties, dashboards)
-3. **PM creates Linear project** with milestones and issues from user stories
+3. **PM creates a NEW dedicated Linear project** (NEVER use an existing/general project):
+   - Search Linear first - if project exists, confirm with CEO whether to reuse or create new
+   - Create project: "[Project Name]" with description
+   - Create milestones: Requirements & Design → Development → Security Review → Staging & QA → Production Release
+   - Convert ALL PRD user stories to Linear issues with acceptance criteria
+   - Assign priorities and dependencies
+   - All gate decisions (Design Review, Security, QA) tracked as Linear issues in THIS project
 4. **PM creates user journey diagrams** in FigJam for key flows
 5. **Devil's Advocate reviews PRD** - challenges scope, gaps, assumptions, missing edge cases, analytics plan completeness
 6. **Nothing else happens** until PRD is complete AND Devil's Advocate blocker challenges are addressed
@@ -320,10 +326,20 @@ Define what to track for success metrics:
 |-----------|---------|------------|-----------|
 | [event_name] | [when it fires] | [key:value pairs] | [which dashboard] |
 
-## Linear Project
-- Create project: [project name]
-- Create milestone per phase
+## Linear Project (MANDATORY - dedicated per project)
+- Search Linear first: does this project already exist?
+  - If YES → confirm with CEO: reuse or create new
+  - If NO → create NEW project (never use general/shared project)
+- Create project: "[Project Name]" with description
+- Create milestones per phase:
+  - Phase 1: Requirements & Design
+  - Phase 2: Development
+  - Phase 3: Security Review
+  - Phase 4: Staging & QA
+  - Phase 5: Production Release
 - Create issue per user story with acceptance criteria
+- Create gate decision issues: "Design Review", "Security Review", "QA Sign-off"
+- Assign priorities (Critical/High/Medium/Low) and dependencies
 
 ## FigJam Diagrams
 - User journey diagram for each major flow
