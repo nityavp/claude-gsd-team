@@ -68,15 +68,19 @@ Spawn 11 teammates with these roles:
 10. QA Lead (Sonnet) - Tests against PRD on Linear, validates UI against Figma, HARD GATE before deploy
 11. DevOps (Sonnet) - Manages GitHub releases, deploys only after Security + QA approval
 
-GITHUB REPO & ENVIRONMENTS:
+GITHUB REPO & DEPLOYMENT:
+- DevOps ASKS user: "Where do you want to deploy? (Vercel, Railway, AWS, Fly.io, other)"
 - DevOps creates a NEW GitHub repo for each project (if not exists)
 - Branching: develop (active work) → staging (pre-prod testing) → main (LIVE/production)
+- DevOps configures chosen platform: link repo, staging env, production env, env vars, domains
 - All dev work happens on feature branches → PRs to develop
 - QA validates on STAGING before anything reaches LIVE
 - Version tags: staging = v{x}-rc.{N}, live = v{x}
 
 WORKFLOW ENFORCEMENT:
-- DevOps creates GitHub repo + branches (develop/staging/main) + protection rules at project start
+- DevOps ASKS deployment platform choice (Vercel/Railway/AWS/Fly.io/other) at project start
+- DevOps creates GitHub repo + branches (develop/staging/main) + protection rules
+- DevOps configures chosen deployment platform (link repo, staging env, production env)
 - PM must finish PRD (incl. analytics tracking plan) before UX and Tech Lead can start
 - PM creates a NEW dedicated Linear project (search first - if exists, confirm with CEO whether to reuse or create new; NEVER add to general/shared project)
 - PM creates milestones (Requirements → Development → Security → Staging & QA → Production) and issues from user stories
@@ -124,8 +128,8 @@ Spawn all 11 teammates as defined in the template.
 
 WORKFLOW:
 0. ALL: Read memory + Research existing auth solutions (Auth.js, Lucia, Clerk, Supabase Auth, etc.)
-0.1. DevOps: Create GitHub repo (if not exists) + branches (develop/staging/main) + protection rules
-1. PM: Evaluate existing auth services vs custom build. Write PRD with "Solutions Evaluated" + analytics tracking plan. Create Linear project.
+0.1. DevOps: ASK "Where do you want to deploy?" + Create GitHub repo + branches + configure deployment platform
+1. PM: Evaluate existing auth services vs custom build. Write PRD with "Solutions Evaluated" + analytics tracking plan. Create NEW Linear project.
 1.5. Devil's Advocate: Review PRD - are requirements complete? Edge cases covered? Right solution chosen? Analytics plan solid?
 2. UX Designer: Research existing auth UI kits in Figma Community. Create login/signup wireframes incl. ALL states (wait for PRD + DA review)
 2.5. PM: Design Review gate - approve designs before dev starts 🔒
@@ -173,7 +177,7 @@ Spawn the full dev team (11 teammates):
 
 Follow the workflow from ~/.claude/team-templates/dev-team-config.md:
 1. ALL agents read ~/.claude/team-memory/ first (learnings, mistakes, patterns, solutions-radar)
-1.1. DevOps creates GitHub repo + branches (develop/staging/main) + protection rules
+1.1. DevOps ASKS deployment platform + creates GitHub repo + branches + configures chosen platform
 2. PM + Tech Lead run "Last 30 Days" research for new tools/solutions in the domain
 3. PM writes comprehensive PRD with "Solutions Evaluated" + analytics tracking plan, sets up Linear
 3.5. Devil's Advocate reviews PRD (challenges scope, assumptions, gaps, analytics plan)

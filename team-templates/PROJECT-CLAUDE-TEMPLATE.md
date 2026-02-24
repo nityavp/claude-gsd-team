@@ -82,18 +82,28 @@ When creating an agent team for this project, use these roles:
 8. **Devil's Advocate** - Challenges EVERY decision; reviews PRD, architecture, designs, code quality; creates challenge issues on Linear ⚠️ CONTINUOUS
 9. **Security Engineer** - Reviews code on GitHub, logs findings to Linear ⚠️ HARD GATE
 10. **QA Lead** - Validates: functional + visual + performance + analytics ⚠️ HARD GATE
-11. **DevOps** - Creates GitHub repo + branches (develop/staging/main), deploys to staging after Security, promotes to LIVE after QA on staging + rollback runbook
+11. **DevOps** - ASKS deployment platform choice, creates GitHub repo + branches, configures staging/LIVE on chosen platform, deploys after gates pass + rollback runbook
 
 ## Workflow Rules (STRICT)
 
 ### Phase 0: Load Memory + Research + Repo Setup (ALL AGENTS)
 1. **Every agent reads** `~/.claude/team-memory/` before starting (learnings, mistakes, patterns, solutions-radar)
-2. **DevOps creates GitHub repo** (if not exists) with branching strategy:
+2. **DevOps ASKS user:** "Where do you want to deploy? (Vercel, Railway, AWS, Fly.io, other)"
+3. **DevOps creates GitHub repo** (if not exists) with branching strategy:
    ```
    gh repo create [org]/[project-name] --private --description "[description]"
    # Set up branches: develop (default), staging, main
    # Configure branch protection: main (QA+Security), staging (Security), develop (1 review + CI)
    # Create GitHub environments: staging, production
+   ```
+4. **DevOps configures deployment platform** (based on user's choice):
+   ```
+   # Link GitHub repo to chosen platform
+   # Create staging environment (linked to staging branch)
+   # Create production environment (linked to main branch)
+   # Set environment variables per environment (NEVER share between staging/prod)
+   # Configure custom domains if needed
+   # Verify auto-deploy: push to staging → staging deploys, push to main → prod deploys
    ```
 3. **PM + Tech Lead run `/last30days`** to research new tools, libraries, frameworks:
    ```
@@ -450,8 +460,13 @@ The QA Lead should test (validate against Figma designs and Linear criteria):
 
 ## DevOps Setup Checklist (Phase 0)
 
-At project start, DevOps creates the GitHub repo and environment:
+At project start, DevOps sets up infra:
 
+**Step 1: ASK deployment platform**
+- [ ] Ask user: "Where do you want to deploy? (Vercel, Railway, AWS, Fly.io, other)"
+- [ ] Document choice in Linear project
+
+**Step 2: GitHub repo**
 - [ ] GitHub repo created (if not exists): `gh repo create [org]/[project-name] --private`
 - [ ] Branches created: `develop` (default), `staging`, `main`
 - [ ] Branch protection configured:
@@ -459,6 +474,15 @@ At project start, DevOps creates the GitHub repo and environment:
   - [ ] `staging`: require PR, require Security approval, no direct push
   - [ ] `develop`: require PR, require 1 review, CI must pass
 - [ ] GitHub environments created: staging, production
+
+**Step 3: Deployment platform**
+- [ ] Project created on chosen platform
+- [ ] GitHub repo linked (auto-deploy from branches)
+- [ ] Staging environment configured (linked to `staging` branch)
+- [ ] Production environment configured (linked to `main` branch)
+- [ ] Environment variables set per environment (NEVER shared between staging/prod)
+- [ ] Custom domains configured if needed
+- [ ] Auto-deploy verified: push to staging → staging deploys, push to main → prod deploys
 - [ ] CI/CD workflows configured for each environment
 
 ## DevOps Staging Deployment Checklist

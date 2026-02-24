@@ -119,6 +119,33 @@ Staging deploys: v{major}.{minor}.{patch}-rc.{number}  (e.g., v1.2.0-rc.1)
 Live deploys:    v{major}.{minor}.{patch}               (e.g., v1.2.0)
 ```
 
+### Deployment Platform (ASK at Project Start)
+DevOps MUST ask the user at project start: **"Where do you want to deploy? (Vercel, Railway, AWS, Fly.io, other)"**
+
+Then configure based on the answer:
+
+| Platform | Frontend | Backend | DB | Staging/Live Setup |
+|----------|----------|---------|-----|-------------------|
+| **Vercel** | Auto-deploy per branch | API routes / Edge functions | Pair with Supabase/PlanetScale | `staging` branch → staging URL, `main` → production URL |
+| **Vercel + Supabase** | Vercel auto-deploy | Supabase Edge Functions | Supabase (Postgres) | Vercel environments + Supabase project per env |
+| **Railway** | Static hosting | Containers | Built-in Postgres | Railway environments: staging + production |
+| **AWS (Amplify)** | Amplify Hosting | Lambda / ECS | RDS / DynamoDB | Amplify branch-based environments |
+| **Fly.io** | Static or Docker | Docker containers | Fly Postgres | Fly machines per environment |
+| **Custom/Self-hosted** | Nginx/Caddy | Docker | Any | Manual environment setup |
+
+**After platform is chosen, DevOps configures:**
+```
+1. Create project on chosen platform
+2. Link GitHub repo (auto-deploy from branches)
+3. Configure environments:
+   - staging: linked to `staging` branch, staging env vars
+   - production: linked to `main` branch, production env vars
+4. Set up environment variables per environment (NEVER share between staging/prod)
+5. Configure custom domains (staging.app.com, app.com)
+6. Verify auto-deploy works: push to staging → staging deploys, push to main → production deploys
+7. Test rollback mechanism on the platform
+```
+
 ---
 
 ## Linear Project Setup (MANDATORY per Project)
@@ -583,8 +610,10 @@ Create Linear issues for each architectural component with dependencies
 
 ### DevOps
 **Responsibilities:**
+- **ASK user:** "Where do you want to deploy?" (Vercel, Railway, AWS, Fly.io, other) - do this FIRST
 - **Create GitHub repo** at project start (if not exists) with branching strategy
 - **Set up environments:** develop, staging, main branches with protection rules
+- **Configure deployment platform:** link GitHub repo, set up staging + production environments, env vars, domains
 - Set up CI/CD pipelines for staging and production
 - **Deploy to staging** after Security gate passes
 - **Promote to production/LIVE** only after QA validates on staging
@@ -598,11 +627,13 @@ Create Linear issues for each architectural component with dependencies
 - 📋 **Linear**: Update deployment status, close release milestones, track infrastructure tasks
 
 **Inputs Required:**
+- User's deployment platform choice (asked at project start)
 - Security sign-off (from Security Engineer) → triggers staging deploy
 - QA sign-off on staging (from QA Lead) → triggers production deploy
 
 **Outputs:**
 - GitHub repository with branching strategy
+- Deployment platform configured (staging + production environments)
 - Staging deployment confirmation
 - Production/LIVE deployment confirmation
 - Monitoring dashboards with alerting thresholds (both environments)
