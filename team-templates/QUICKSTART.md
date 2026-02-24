@@ -68,7 +68,15 @@ Spawn 11 teammates with these roles:
 10. QA Lead (Sonnet) - Tests against PRD on Linear, validates UI against Figma, HARD GATE before deploy
 11. DevOps (Sonnet) - Manages GitHub releases, deploys only after Security + QA approval
 
+GITHUB REPO & ENVIRONMENTS:
+- DevOps creates a NEW GitHub repo for each project (if not exists)
+- Branching: develop (active work) → staging (pre-prod testing) → main (LIVE/production)
+- All dev work happens on feature branches → PRs to develop
+- QA validates on STAGING before anything reaches LIVE
+- Version tags: staging = v{x}-rc.{N}, live = v{x}
+
 WORKFLOW ENFORCEMENT:
+- DevOps creates GitHub repo + branches (develop/staging/main) + protection rules at project start
 - PM must finish PRD (incl. analytics tracking plan) before UX and Tech Lead can start
 - PM creates Linear project with milestones and issues from user stories
 - Devil's Advocate reviews PRD BEFORE UX and Tech Lead start (challenges scope, gaps, assumptions)
@@ -76,14 +84,13 @@ WORKFLOW ENFORCEMENT:
 - PM MUST approve designs before Frontend Dev starts (DESIGN REVIEW GATE 🔒)
 - Tech Lead CREATES architecture diagrams in FigJam
 - Devil's Advocate reviews architecture + designs BEFORE development starts
-- Frontend Dev pulls design specs from Figma + API contract + implements analytics
-- Backend Dev needs API contract (Tech Lead)
-- Data Engineer needs architecture (Tech Lead)
+- All devs work on feature branches → PRs to develop
 - Devil's Advocate reviews ALL code PRs for quality BEFORE Security review
-- Security Engineer MUST approve Backend + Data before QA starts (HARD GATE 🔒)
-- QA Lead validates: functional + visual + performance + analytics (HARD GATE 🔒)
-- QA Lead MUST approve all work before DevOps deploys
-- DevOps creates rollback runbook BEFORE deploying (tested, not theoretical)
+- Security Engineer MUST approve before deploy to staging (HARD GATE 🔒)
+- DevOps deploys develop → STAGING after Security approval
+- QA Lead validates ON STAGING: functional + visual + performance + analytics (HARD GATE 🔒)
+- QA Lead MUST approve staging before DevOps promotes to LIVE
+- DevOps promotes staging → LIVE with rollback runbook (tested, not theoretical)
 - Devil's Advocate writes final challenge report + validates memory quality
 
 MEMORY SYSTEM:
@@ -116,21 +123,23 @@ Spawn all 11 teammates as defined in the template.
 
 WORKFLOW:
 0. ALL: Read memory + Research existing auth solutions (Auth.js, Lucia, Clerk, Supabase Auth, etc.)
+0.1. DevOps: Create GitHub repo (if not exists) + branches (develop/staging/main) + protection rules
 1. PM: Evaluate existing auth services vs custom build. Write PRD with "Solutions Evaluated" + analytics tracking plan. Create Linear project.
 1.5. Devil's Advocate: Review PRD - are requirements complete? Edge cases covered? Right solution chosen? Analytics plan solid?
 2. UX Designer: Research existing auth UI kits in Figma Community. Create login/signup wireframes incl. ALL states (wait for PRD + DA review)
 2.5. PM: Design Review gate - approve designs before dev starts 🔒
 3. Tech Lead: Evaluate auth libraries (Auth.js, Passport, Lucia). Create architecture in FigJam, define API contracts (wait for PRD + DA review)
 3.5. Devil's Advocate: Review architecture - scalability? Over-engineering? Better alternatives?
-4. Frontend Dev: Use existing component library + auth UI patterns. Build login UI + implement analytics (wait for Design Review + Tech Lead + DA review)
-5. Backend Dev: Use chosen auth library, NOT custom auth. Implement endpoints per API contract (wait for API contract + DA review)
-6. Data Engineer: Use existing ORM (Prisma/Drizzle). Design user schema, sessions table (wait for architecture + DA review)
+4. Frontend Dev: Build login UI + analytics on feature branches → PRs to develop (wait for Design Review + Tech Lead + DA review)
+5. Backend Dev: Use chosen auth library. Implement endpoints on feature branches → PRs to develop (wait for API contract + DA review)
+6. Data Engineer: Use existing ORM. Design user schema on feature branches → PRs to develop (wait for architecture + DA review)
 6.5. Devil's Advocate: Code quality review on ALL PRs - API contract compliance, test coverage, naming
-7. Security Engineer: Review against OWASP checklist + known vulnerabilities of chosen libraries (HARD GATE 🔒, wait for DA code review)
-8. QA Lead: Test all auth flows + performance + analytics validation (HARD GATE 🔒, wait for Security approval)
-9. DevOps: Create rollback runbook + deploy via existing templates (wait for QA approval)
-10. ALL: Log learnings + update solutions-radar.md
-11. CEO + Devil's Advocate: Retrospective + final challenge report + memory quality validation
+7. Security Engineer: Review against OWASP checklist (HARD GATE 🔒, wait for DA code review)
+8. DevOps: Deploy develop → STAGING (tag: v{x}-rc.{N}) (wait for Security approval)
+9. QA Lead: Validate ON STAGING - all auth flows + performance + analytics (HARD GATE 🔒)
+10. DevOps: Promote staging → LIVE (tag: v{x}) + rollback runbook (wait for QA staging approval)
+11. ALL: Log learnings + update solutions-radar.md
+12. CEO + Devil's Advocate: Retrospective + final challenge report + memory quality validation
 
 RESEARCH-FIRST: Every agent evaluates existing solutions before building. No custom code without Tech Lead justification.
 MEMORY: All agents read ~/.claude/team-memory/ before starting. All agents log learnings after each task.
@@ -163,18 +172,20 @@ Spawn the full dev team (11 teammates):
 
 Follow the workflow from ~/.claude/team-templates/dev-team-config.md:
 1. ALL agents read ~/.claude/team-memory/ first (learnings, mistakes, patterns, solutions-radar)
+1.1. DevOps creates GitHub repo + branches (develop/staging/main) + protection rules
 2. PM + Tech Lead run "Last 30 Days" research for new tools/solutions in the domain
 3. PM writes comprehensive PRD with "Solutions Evaluated" + analytics tracking plan, sets up Linear
 3.5. Devil's Advocate reviews PRD (challenges scope, assumptions, gaps, analytics plan)
 4. UX uses existing UI kits + creates designs incl. ALL states. Tech Lead creates architecture in FigJam (parallel, after DA review)
 4.5. Devil's Advocate reviews architecture + designs. PM approves designs (DESIGN REVIEW 🔒)
-5. All devs USE EXISTING LIBRARIES wherever possible. Frontend implements analytics tracking.
+5. All devs work on feature branches → PRs to develop. USE EXISTING LIBRARIES. Frontend implements analytics.
 5.5. Devil's Advocate reviews ALL code PRs for quality (API compliance, tests, naming)
-6. Security reviews code on GitHub before QA (HARD GATE 🔒, after DA code review)
-7. QA: functional + visual + performance + analytics validation (HARD GATE 🔒)
-8. DevOps creates rollback runbook + deploys using existing templates (after QA approval)
-9. After each task, every agent logs learnings + updates solutions-radar.md
-10. CEO + Devil's Advocate write retrospective + challenge report + validate memory quality
+6. Security reviews code on GitHub (HARD GATE 🔒, after DA code review)
+7. DevOps deploys develop → STAGING (tag: v{x}-rc.{N})
+8. QA validates ON STAGING: functional + visual + performance + analytics (HARD GATE 🔒)
+9. DevOps promotes staging → LIVE (tag: v{x}) + rollback runbook (after QA staging approval)
+10. After each task, every agent logs learnings + updates solutions-radar.md
+11. CEO + Devil's Advocate write retrospective + challenge report + validate memory quality
 
 Create 30-40 tasks with proper dependencies to build the entire product.
 ```
@@ -205,9 +216,10 @@ Ask QA Lead: "Is everything passing acceptance criteria? Have you validated agai
 ```
 Remind the team: PM MUST approve designs before Frontend Dev starts (Design Review gate).
 Remind the team: Devil's Advocate blocker challenges MUST be addressed before proceeding.
-Remind the team: Security MUST approve before QA starts testing.
-Remind the team: QA MUST approve (functional + performance + analytics) before DevOps deploys.
-Remind DevOps: Rollback runbook MUST exist and be tested before deploying.
+Remind the team: Security MUST approve before deploy to staging.
+Remind the team: QA MUST validate ON STAGING before promoting to LIVE.
+Remind DevOps: Rollback runbook MUST exist and be tested before LIVE deploy.
+Remind DevOps: All dev work on feature branches → PRs to develop (never push to staging/main directly).
 ```
 
 ### Check Memory Usage
@@ -233,10 +245,26 @@ Stop! QA Lead cannot start until Security Engineer provides explicit approval.
 Security Engineer: Please provide your security review status on Linear.
 ```
 
-### DevOps Trying to Deploy Without QA Approval
+### DevOps Trying to Deploy to LIVE Without Staging Validation
 ```
-Stop! DevOps cannot deploy until QA Lead provides explicit sign-off.
-QA Lead: Have you validated all PRD acceptance criteria and matched Figma designs?
+Stop! DevOps cannot promote to LIVE until QA validates on STAGING first.
+Flow: develop → staging (after Security) → QA validates on staging → LIVE (after QA approval)
+QA Lead: Have you tested on the staging environment? Post "STAGING APPROVED" on Linear.
+```
+
+### No GitHub Repo Created
+```
+DevOps: Every project MUST have its own GitHub repo with proper branches.
+Run: gh repo create [org]/[project-name] --private
+Set up branches: develop (default), staging, main
+Configure branch protection rules before any code is written.
+```
+
+### Code Pushed Directly to Staging or Main
+```
+Stop! No direct pushes to staging or main branches.
+All work must go through: feature branch → PR to develop → merge → staging → LIVE
+Branch protection rules should prevent this. DevOps: verify protection rules are configured.
 ```
 
 ### PM Didn't Finish PRD

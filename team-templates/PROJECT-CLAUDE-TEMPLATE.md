@@ -82,23 +82,30 @@ When creating an agent team for this project, use these roles:
 8. **Devil's Advocate** - Challenges EVERY decision; reviews PRD, architecture, designs, code quality; creates challenge issues on Linear ⚠️ CONTINUOUS
 9. **Security Engineer** - Reviews code on GitHub, logs findings to Linear ⚠️ HARD GATE
 10. **QA Lead** - Validates: functional + visual + performance + analytics ⚠️ HARD GATE
-11. **DevOps** - Deployment via GitHub releases + rollback runbook (needs: Security + QA approval)
+11. **DevOps** - Creates GitHub repo + branches (develop/staging/main), deploys to staging after Security, promotes to LIVE after QA on staging + rollback runbook
 
 ## Workflow Rules (STRICT)
 
-### Phase 0: Load Memory + Research (ALL AGENTS)
+### Phase 0: Load Memory + Research + Repo Setup (ALL AGENTS)
 1. **Every agent reads** `~/.claude/team-memory/` before starting (learnings, mistakes, patterns, solutions-radar)
-2. **PM + Tech Lead run `/last30days`** to research new tools, libraries, frameworks:
+2. **DevOps creates GitHub repo** (if not exists) with branching strategy:
+   ```
+   gh repo create [org]/[project-name] --private --description "[description]"
+   # Set up branches: develop (default), staging, main
+   # Configure branch protection: main (QA+Security), staging (Security), develop (1 review + CI)
+   # Create GitHub environments: staging, production
+   ```
+3. **PM + Tech Lead run `/last30days`** to research new tools, libraries, frameworks:
    ```
    /last30days [your tech stack] best tools and practices
    /last30days [your domain] latest libraries
    /last30days [competitor] what people are saying
    ```
-3. **Every agent checks** `~/.claude/team-memory/solutions-radar.md` for known solutions
-4. **Apply past learnings** - check patterns, avoid known mistakes, use role knowledge
-5. **Log new discoveries** to `solutions-radar.md`
-6. **Set up watchlist** for continuous tracking: `last30 watch [topic] every [interval]`
-7. **This is not optional** - research before building is mandatory
+4. **Every agent checks** `~/.claude/team-memory/solutions-radar.md` for known solutions
+5. **Apply past learnings** - check patterns, avoid known mistakes, use role knowledge
+6. **Log new discoveries** to `solutions-radar.md`
+7. **Set up watchlist** for continuous tracking: `last30 watch [topic] every [interval]`
+8. **This is not optional** - research before building AND repo setup are mandatory
 
 ### Phase 0.5: Research-First Decision (ALL AGENTS)
 For every component, feature, or technical decision:
@@ -124,7 +131,15 @@ For every component, feature, or technical decision:
 8. **PM approves designs** 🔒 DESIGN REVIEW GATE - all states designed, matches PRD, accessible
    - Frontend Dev CANNOT start until PM posts "DESIGN APPROVED" on Linear
 
-### Phase 2: Development (USE EXISTING LIBRARIES)
+### Phase 2: Development (USE EXISTING LIBRARIES - all work on feature branches)
+All developers create **feature branches** from `develop` and submit PRs to `develop`:
+```
+git checkout develop
+git checkout -b feature/[feature-name]
+# ... work ...
+# PR to develop → code review → merge
+```
+
 9. **Frontend Dev** waits for:
    - **Design Review approval from PM** (DESIGN APPROVED on Linear)
    - Figma designs from UX Designer (pulls specs via Figma MCP)
@@ -144,25 +159,36 @@ For every component, feature, or technical decision:
 
 ### Phase 3: Security Gate 🔒
 12. **Security Engineer reviews:**
-   - All backend code on GitHub
+   - All backend code on GitHub (on `develop` branch)
    - All data access code on GitHub
    - Authentication/authorization
    - Secrets management
    - Logs all findings as Linear issues with severity labels
-13. **HARD GATE:** QA cannot start until Security explicitly approves
+13. **HARD GATE:** After Security approves → DevOps deploys `develop` → `staging`
 
-### Phase 4: QA Gate 🔒
-14. **QA Lead validates:**
+### Phase 4: Staging Deploy + QA Gate 🔒
+14. **DevOps deploys to STAGING:**
+   - Merges `develop` → `staging` via PR (requires Security approval)
+   - Tags: `v{version}-rc.{N}`
+   - Deploys to staging environment
+15. **QA Lead validates ON STAGING:**
    - All PRD acceptance criteria (tracked in Linear)
    - UI matches Figma designs (compares via Figma MCP)
-   - All user flows work end-to-end
-   - Integration testing
+   - All user flows work end-to-end on staging
+   - Integration testing on staging
+   - Performance testing on staging (API <500ms p95, page load <3s)
+   - Analytics validation on staging
    - Logs all bugs as Linear issues with severity and reproduction steps
-15. **HARD GATE:** DevOps cannot deploy until QA explicitly approves
+16. **HARD GATE:** DevOps cannot promote to LIVE until QA posts "STAGING APPROVED" on Linear
 
-### Phase 5: Deployment
-16. **DevOps deploys** only after both gates pass
-17. DevOps creates GitHub release and closes Linear milestone
+### Phase 5: Production/LIVE Deployment
+17. **DevOps promotes staging → LIVE** only after QA approves on staging:
+   - Merges `staging` → `main` via PR (requires QA + Security approval)
+   - Tags release: `v{version}`
+   - Creates GitHub release with changelog
+   - Closes Linear milestone
+   - Monitors production for 30 minutes post-deploy
+18. **If LIVE deploy fails** → rollback to previous tag, fix on develop, re-deploy through staging
 
 ### Phase 6: Learn & Remember (ALL AGENTS)
 18. **Every agent logs learnings** to `~/.claude/team-memory/learnings.md` after completing tasks
@@ -224,6 +250,7 @@ Create tasks with these dependencies (track all in Linear):
 
 ```
 [ALL] Read memory + Research existing solutions + Last 30 Days check
+[DevOps] Create GitHub repo (if not exists) + branches (develop/staging/main) + protection rules
   └→ [PM] Research products + Write PRD (incl. "Solutions Evaluated" + analytics tracking plan)
       └→ [Devil's Advocate] Review PRD ⚠️ (scope, gaps, assumptions, analytics plan)
           └→ [UX] Research UI kits + Create wireframes incl. ALL states (blockedBy: PRD + DA review)
@@ -231,15 +258,16 @@ Create tasks with these dependencies (track all in Linear):
                   └→ [PM] Design Review 🔒 (approve designs before dev starts)
           └→ [Tech Lead] Research boilerplates + Create architecture + API contracts (blockedBy: PRD + DA review)
               └→ [Devil's Advocate] Review architecture ⚠️ (scalability, over-engineering)
-                  └→ [Frontend] Build UI + implement analytics (blockedBy: Design Review 🔒, API contract)
-                  └→ [Backend] Use existing libraries + Build APIs (blockedBy: API contract, DA review)
-                  └→ [Data] Use existing ORM + Write schemas (blockedBy: architecture, DA review)
+                  └→ [Frontend] Build UI + analytics (feature branches → PRs to develop)
+                  └→ [Backend] Build APIs (feature branches → PRs to develop)
+                  └→ [Data] Write schemas (feature branches → PRs to develop)
                       └→ [Devil's Advocate] Code quality review on ALL PRs ⚠️
                           └→ [Security] Review code on GitHub 🔒 (blockedBy: Backend, Data, DA code review)
-                              └→ [QA] Functional + visual + performance + analytics 🔒 (blockedBy: Frontend, Security)
-                                  └→ [DevOps] Deploy + monitoring + alerting + rollback runbook (blockedBy: QA)
-                                      └→ [ALL] Log learnings + Update solutions-radar.md
-                                          └→ [CEO + DA] Retrospective + challenge report + memory validation
+                              └→ [DevOps] Deploy develop → STAGING (tag: v{x}-rc.{N})
+                                  └→ [QA] Validate ON STAGING 🔒 (functional + visual + perf + analytics)
+                                      └→ [DevOps] Promote staging → LIVE (tag: v{x}) + rollback runbook
+                                          └→ [ALL] Log learnings + Update solutions-radar.md
+                                              └→ [CEO + DA] Retrospective + challenge report + memory validation
 ```
 
 ## PRD Template
@@ -404,19 +432,44 @@ The QA Lead should test (validate against Figma designs and Linear criteria):
 - [ ] Accessibility standards met (contrast, keyboard nav, screen reader)
 - [ ] Browser compatibility verified
 
-## DevOps Deployment Checklist
+## DevOps Setup Checklist (Phase 0)
 
-DevOps can only deploy when:
+At project start, DevOps creates the GitHub repo and environment:
+
+- [ ] GitHub repo created (if not exists): `gh repo create [org]/[project-name] --private`
+- [ ] Branches created: `develop` (default), `staging`, `main`
+- [ ] Branch protection configured:
+  - [ ] `main`: require PR, require QA + Security approval, no direct push, no force push
+  - [ ] `staging`: require PR, require Security approval, no direct push
+  - [ ] `develop`: require PR, require 1 review, CI must pass
+- [ ] GitHub environments created: staging, production
+- [ ] CI/CD workflows configured for each environment
+
+## DevOps Staging Deployment Checklist
+
+Deploy to staging after Security gate passes:
 
 - [ ] Security Engineer has given "SECURITY APPROVED" sign-off (on Linear)
-- [ ] QA Lead has given "QA APPROVED" sign-off (on Linear)
-- [ ] All tests passing in CI/CD (on GitHub)
+- [ ] All tests passing in CI/CD on `develop` (on GitHub)
+- [ ] Merge `develop` → `staging` via PR
+- [ ] Tag: `v{version}-rc.{N}`
+- [ ] Deploy to staging environment
+- [ ] Notify QA Lead that staging is ready for validation
+
+## DevOps Production/LIVE Deployment Checklist
+
+Promote to LIVE only after QA validates on staging:
+
+- [ ] QA Lead has given "STAGING APPROVED" + "QA APPROVED" sign-off (on Linear)
+- [ ] All tests passing in CI/CD on `staging` (on GitHub)
 - [ ] Database migrations tested (including DOWN migration for rollback)
 - [ ] **Rollback runbook created and tested:**
   - [ ] Current production tagged (`pre-release-{version}`)
   - [ ] One-liner rollback command documented
   - [ ] Down migration verified
   - [ ] Rollback triggers defined (error rate >5%, p95 >3x, critical functionality broken)
+- [ ] Merge `staging` → `main` via PR (requires QA + Security approval)
+- [ ] Tag release: `v{version}`
 - [ ] Monitoring dashboards configured with alerting thresholds
 - [ ] **Post-deploy monitoring plan** (watch error rate, response times, analytics flow for 30 min)
 - [ ] GitHub release created with changelog
@@ -478,6 +531,7 @@ Ensure memory directory exists: ~/.claude/team-memory/
 
 Spawn all 11 teammates and follow the workflow:
 0. ALL agents read ~/.claude/team-memory/ (learnings, mistakes, patterns, solutions-radar)
+0.1. DevOps creates GitHub repo (if not exists) + branches (develop/staging/main) + protection rules
 0.5. PM + Tech Lead run "Last 30 Days" research for new tools in this domain
 1. PM researches existing solutions, writes PRD with "Solutions Evaluated" + analytics tracking plan, creates Linear project
 1.5. Devil's Advocate reviews PRD (challenges scope, assumptions, gaps, analytics plan)
@@ -485,14 +539,15 @@ Spawn all 11 teammates and follow the workflow:
 2.5. PM approves designs (DESIGN REVIEW GATE 🔒)
 3. Tech Lead evaluates boilerplates/libraries, creates architecture in FigJam (wait for PRD + DA review)
 3.5. Devil's Advocate reviews architecture + designs (scalability, missing states, over-engineering)
-4. Frontend Dev builds from Figma specs + API contract + implements analytics (wait for Design Review + DA review)
-5. Backend/Data devs use existing libraries (ORM, auth, validation) + build from architecture (wait for DA review)
+4. Frontend Dev builds from Figma specs + API contract + analytics (feature branches → PRs to develop)
+5. Backend/Data devs build from architecture (feature branches → PRs to develop)
 5.5. Devil's Advocate reviews ALL code PRs for quality (API compliance, tests, naming)
 6. Security reviews on GitHub, logs to Linear (HARD GATE 🔒, wait for DA code review)
-7. QA: functional + visual + performance + analytics validation (HARD GATE 🔒)
-8. DevOps creates rollback runbook + deploys using existing templates (wait for QA approval)
-9. ALL agents log learnings + update solutions-radar.md
-10. CEO + Devil's Advocate write retrospective + challenge report + validate memory quality
+7. DevOps deploys develop → STAGING (tag: v{x}-rc.{N})
+8. QA validates ON STAGING: functional + visual + performance + analytics (HARD GATE 🔒)
+9. DevOps promotes staging → LIVE (tag: v{x}) + rollback runbook (wait for QA staging approval)
+10. ALL agents log learnings + update solutions-radar.md
+11. CEO + Devil's Advocate write retrospective + challenge report + validate memory quality
 
 Enforce task dependencies strictly.
 Enforce memory read/write strictly.
@@ -505,6 +560,8 @@ Enforce all gates: Design Review (PM) → Security → QA → Deploy.
 ## Notes
 
 - This workflow is designed for quality, thoroughness, and continuous improvement
+- **Every project gets its own GitHub repo** with develop/staging/main branches
+- **QA validates on STAGING** before anything reaches production/LIVE
 - **3 hard gates exist** to prevent issues from reaching production: Design Review, Security, QA
 - Do not skip or shortcut any gate
 - Each role has expertise in their domain - trust them

@@ -20,25 +20,35 @@ This template configures Claude Code to orchestrate a complete software developm
 | 8 | Devil's Advocate | Sonnet | Challenges EVERY decision, reviews all artifacts, memory quality validation |
 | 9 | Security Engineer | Sonnet | Code review, OWASP compliance, HARD GATE before QA |
 | 10 | QA Lead | Sonnet | Functional + visual + performance + analytics testing, HARD GATE before deploy |
-| 11 | DevOps | Sonnet | Releases, deployments, rollback runbooks |
+| 11 | DevOps | Sonnet | Creates GitHub repo + branches, staging/LIVE deployments, rollback runbooks |
 
 ### Workflow Overview
 
 ```
-Phase 0: ALL read memory + research (/last30days)        MAX 30 min
-Phase 1: PM writes PRD -> DA reviews -> UX + Tech Lead   (parallel after DA)
-Phase 2: DA reviews designs/arch -> Design Review gate -> Devs build
-Phase 3: DA code review -> Security gate -> QA gate       (includes perf testing)
-Phase 4: DevOps deploys (with rollback plan) -> ALL log learnings
+Phase 0:   ALL read memory + research (/last30days)        MAX 30 min
+Phase 0.1: DevOps creates GitHub repo + branches (develop/staging/main)
+Phase 1:   PM writes PRD -> DA reviews -> UX + Tech Lead   (parallel after DA)
+Phase 2:   DA reviews designs/arch -> Design Review gate -> Devs build (on feature branches)
+Phase 3:   DA code review -> Security gate
+Phase 4:   DevOps deploys to STAGING -> QA validates on staging
+Phase 5:   DevOps promotes staging -> LIVE -> ALL log learnings
 ```
+
+### Environment Strategy
+
+| Branch | Environment | Purpose | Deploys After |
+|--------|-------------|---------|---------------|
+| `develop` | Development | Active work, feature branches merge here | Code review + CI |
+| `staging` | Pre-production | QA validates here before LIVE | Security gate |
+| `main` | Production/LIVE | Deployed to users | QA approval on staging |
 
 ### Quality Gates
 
 | Gate | Type | Owner | Blocks |
 |------|------|-------|--------|
 | Design Review | HARD | PM | Frontend Dev cannot start without PM approval of designs |
-| Security | HARD | Security Engineer | QA cannot start without security sign-off |
-| QA | HARD | QA Lead | DevOps cannot deploy without QA approval |
+| Security | HARD | Security Engineer | Cannot deploy to staging without security sign-off |
+| QA | HARD | QA Lead | Cannot promote staging to LIVE without QA approval |
 | Devil's Advocate | SOFT (continuous) | Devil's Advocate | Blocker challenges must be addressed before proceeding |
 
 ## Quick Start

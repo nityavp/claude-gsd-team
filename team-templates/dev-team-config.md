@@ -9,10 +9,17 @@ This is a reusable team template for software development projects with built-in
 
 WORKFLOW IN 30 SECONDS:
   Phase 0: ALL read memory + research (/last30days) → MAX 30 min
+  Phase 0.1: DevOps creates GitHub repo (if not exists) with staging/main branches
   Phase 1: PM writes PRD → DA reviews → UX designs + Tech Lead architects (parallel)
-  Phase 2: DA reviews designs/arch → Design Review gate (PM approves) → Devs build
+  Phase 2: DA reviews designs/arch → Design Review gate (PM approves) → Devs build (on develop branch)
   Phase 3: DA code review → Security gate 🔒 → QA gate 🔒 (includes perf testing)
-  Phase 4: DevOps deploys (with rollback plan) → ALL log learnings
+  Phase 4: DevOps deploys to STAGING → QA validates on staging → Promote to LIVE
+  Phase 5: ALL log learnings
+
+ENVIRONMENTS:
+  develop  → Active development (feature branches merge here)
+  staging  → Pre-production testing (QA validates here before live)
+  main     → Production/LIVE (only promoted from staging after QA sign-off)
 
 3 HARD GATES:                    1 SOFT GATE:
   🔒 Design Review (PM)           ⚠️ Devil's Advocate (continuous)
@@ -51,6 +58,69 @@ When teammates first use an MCP server, they'll be prompted to authenticate. Mak
 
 ---
 
+## GitHub Repository & Environment Strategy
+
+### Auto-Repository Creation
+For every new project, DevOps **MUST** create a dedicated GitHub repository if one doesn't already exist. This happens at the very start (Phase 0), before any code is written.
+
+```
+DevOps: Create GitHub repo for this project:
+  gh repo create [org]/[project-name] --private --description "[project description]"
+```
+
+### Branching Strategy (GitFlow-Lite)
+```
+main (LIVE/Production)
+  ↑ merge via PR (only from staging, after QA + Security sign-off)
+  │
+staging (Pre-production)
+  ↑ merge via PR (only from develop, after Security gate passes)
+  │
+develop (Active development)
+  ↑ merge via PR (feature branches merge here)
+  │
+feature/[name] (Individual work)
+  ↑ created from develop
+```
+
+| Branch | Purpose | Who Merges | Protection |
+|--------|---------|------------|------------|
+| `main` | Production/LIVE - deployed to users | DevOps only | Requires QA + Security approval, no direct push |
+| `staging` | Pre-production testing environment | DevOps (after Security gate) | Requires Security approval, no direct push |
+| `develop` | Integration branch for active work | Tech Lead (after code review) | Requires 1 review + CI passing |
+| `feature/*` | Individual feature work | Developer (via PR to develop) | CI must pass |
+
+### Environment Setup (DevOps creates at project start)
+```
+1. Create GitHub repo (if not exists)
+2. Set default branch to `develop`
+3. Create `staging` branch from `develop`
+4. Create `main` branch from `staging`
+5. Configure branch protection rules:
+   - main: require PR, require QA + Security approval, no force push
+   - staging: require PR, require Security approval, no force push
+   - develop: require PR, require 1 review, CI must pass
+6. Create GitHub environments: staging, production
+7. Set up CI/CD workflows for each environment
+```
+
+### Deployment Flow
+```
+Feature complete → PR to develop → Code review + CI → Merge to develop
+                                                           ↓
+                              Security gate passes → PR to staging → Deploy to STAGING
+                                                                          ↓
+                                              QA validates on staging → PR to main → Deploy to LIVE
+```
+
+### Version Tagging
+```
+Staging deploys: v{major}.{minor}.{patch}-rc.{number}  (e.g., v1.2.0-rc.1)
+Live deploys:    v{major}.{minor}.{patch}               (e.g., v1.2.0)
+```
+
+---
+
 ## Team Structure (11 Roles)
 
 ### Management Layer
@@ -72,7 +142,7 @@ When teammates first use an MCP server, they'll be prompted to authenticate. Mak
 - **QA Lead** - Tests against PRD acceptance criteria ⚠️ HARD GATE before deploy
 
 ### Operations Layer
-- **DevOps** - Deploys only after Security AND QA sign-off
+- **DevOps** - Creates GitHub repo + branches, deploys to staging after Security, promotes to LIVE after QA
 
 ## Research-First Mindset (MANDATORY)
 
@@ -123,6 +193,7 @@ Tech Lead is the gatekeeper - no "build from scratch" without documented justifi
 
 ```
 [ALL] Read memory + /last30days research (MAX 30 min time-box)
+  [DevOps] Create GitHub repo (if not exists) + set up branches (develop/staging/main) + protection rules
     └─→ PM (PRD + "Solutions Evaluated" + analytics tracking plan)
         └─→ Devil's Advocate reviews PRD (challenges scope, gaps, assumptions)
             ├─→ UX Designer (wireframes using existing UI kits)
@@ -130,15 +201,16 @@ Tech Lead is the gatekeeper - no "build from scratch" without documented justifi
             │           └─→ PM approves designs 🔒 DESIGN REVIEW GATE
             └─→ Tech Lead (architecture using existing boilerplates)
                   └─→ Devil's Advocate reviews architecture (scalability? over-engineering?)
-                      ├─→ Frontend Dev (uses component libraries + Figma specs + implements analytics)
-                      ├─→ Backend Dev (uses existing auth/ORM/validation libraries)
-                      └─→ Data Engineer (uses existing ORM/migration tools)
+                      ├─→ Frontend Dev (feature branches → PRs to develop)
+                      ├─→ Backend Dev (feature branches → PRs to develop)
+                      └─→ Data Engineer (feature branches → PRs to develop)
                               └─→ Devil's Advocate reviews code quality on ALL PRs
                                   └─→ Security Engineer (reviews security) 🔒 HARD GATE
-                                      └─→ QA Lead (functional + visual + performance + analytics validation) 🔒 HARD GATE
-                                          └─→ DevOps (deploys + monitoring + alerting + rollback runbook) ✅
-                                              └─→ [ALL] Log learnings + update solutions-radar.md
-                                                  └─→ [CEO] Retrospective + Devil's Advocate final report + memory validation
+                                      └─→ DevOps deploys develop → STAGING (tag: v{x}-rc.{N})
+                                          └─→ QA Lead validates ON STAGING 🔒 HARD GATE
+                                              └─→ DevOps promotes staging → LIVE (tag: v{x})
+                                                  └─→ [ALL] Log learnings + update solutions-radar.md
+                                                      └─→ [CEO] Retrospective + DA final report + memory validation
 ```
 
 ## Role Definitions
@@ -459,53 +531,70 @@ Create Linear issues for each architectural component with dependencies
 
 ### DevOps
 **Responsibilities:**
-- Deploy to production
-- Set up CI/CD pipelines
-- Monitor production health
+- **Create GitHub repo** at project start (if not exists) with branching strategy
+- **Set up environments:** develop, staging, main branches with protection rules
+- Set up CI/CD pipelines for staging and production
+- **Deploy to staging** after Security gate passes
+- **Promote to production/LIVE** only after QA validates on staging
+- Monitor both staging and production health
 - **Create rollback runbook** before every deploy (tested, not theoretical)
 - **Set up monitoring and alerting** (error rates, response times, resource usage)
-- Only deploys after both Security and QA sign-off
+- **Manage version tags:** staging gets `-rc.N`, production gets release versions
 
 **MCP Capabilities:**
-- 🔧 **GitHub**: Manage releases, tags, deployment branches, CI/CD workflows
+- 🔧 **GitHub**: Create repos, manage branches, releases, tags, deployment branches, CI/CD workflows, branch protection rules
 - 📋 **Linear**: Update deployment status, close release milestones, track infrastructure tasks
 
 **Inputs Required:**
-- Security sign-off (from Security Engineer)
-- QA sign-off (from QA Lead)
+- Security sign-off (from Security Engineer) → triggers staging deploy
+- QA sign-off on staging (from QA Lead) → triggers production deploy
 
 **Outputs:**
-- Deployment confirmation
-- Monitoring dashboards with alerting thresholds
+- GitHub repository with branching strategy
+- Staging deployment confirmation
+- Production/LIVE deployment confirmation
+- Monitoring dashboards with alerting thresholds (both environments)
 - Rollback runbook (see Incident Response section below)
 
 **Rollback Runbook (MANDATORY before every deploy):**
 ```
-PRE-DEPLOY:
-  1. Tag current production state (git tag pre-release-{version})
-  2. Verify database migration is reversible (down migration exists and tested)
-  3. Document rollback command (one-liner, no thinking required under pressure)
-  4. Verify monitoring dashboards are live
+STAGING DEPLOY:
+  PRE-DEPLOY:
+    1. Tag: git tag v{version}-rc.{N}
+    2. Verify database migration is reversible (down migration tested)
+    3. Deploy to staging environment
+  POST-DEPLOY:
+    1. QA validates on staging (functional + visual + performance + analytics)
+    2. If staging fails → fix on develop → re-deploy to staging
+    3. If staging passes → QA posts "STAGING APPROVED" on Linear → proceed to LIVE
 
-POST-DEPLOY MONITORING (first 30 minutes):
-  1. Watch error rate dashboard - alert if >1% increase
-  2. Watch response time dashboard - alert if p95 >2x baseline
-  3. Watch resource usage - alert if CPU/memory >80%
-  4. Verify analytics events are flowing
+LIVE/PRODUCTION DEPLOY:
+  PRE-DEPLOY:
+    1. Tag current production state (git tag pre-release-{version})
+    2. Merge staging → main via PR (requires QA + Security approval)
+    3. Tag release: git tag v{version}
+    4. Document rollback command (one-liner, no thinking required under pressure)
+    5. Verify monitoring dashboards are live
 
-ROLLBACK TRIGGER (any of these = immediate rollback):
-  - Error rate increase >5%
-  - p95 response time >3x baseline
-  - Any critical functionality broken
-  - Database integrity issues
+  POST-DEPLOY MONITORING (first 30 minutes):
+    1. Watch error rate dashboard - alert if >1% increase
+    2. Watch response time dashboard - alert if p95 >2x baseline
+    3. Watch resource usage - alert if CPU/memory >80%
+    4. Verify analytics events are flowing
 
-ROLLBACK STEPS:
-  1. Revert to tagged release: git checkout pre-release-{version}
-  2. Run down migration if needed
-  3. Redeploy previous version
-  4. Verify rollback success via monitoring
-  5. Log incident to Linear with root cause
-  6. Log to ~/.claude/team-memory/mistakes.md
+  ROLLBACK TRIGGER (any of these = immediate rollback):
+    - Error rate increase >5%
+    - p95 response time >3x baseline
+    - Any critical functionality broken
+    - Database integrity issues
+
+  ROLLBACK STEPS:
+    1. Revert to tagged release: git checkout pre-release-{version}
+    2. Run down migration if needed
+    3. Redeploy previous version
+    4. Verify rollback success via monitoring
+    5. Log incident to Linear with root cause
+    6. Log to ~/.claude/team-memory/mistakes.md
 ```
 
 ---
@@ -532,17 +621,17 @@ ROLLBACK STEPS:
 - **Output:** Explicit "SECURITY APPROVED" sign-off
 - **Blocks:** QA Lead cannot start until approved
 
-### Gate 2: QA Validation (HARD GATE)
-- **Blocker:** QA Lead must validate all acceptance criteria
+### Gate 2: QA Validation (HARD GATE) - Validated on STAGING
+- **Blocker:** QA Lead must validate all acceptance criteria **on the staging environment**
 - **Criteria:**
-  - All PRD acceptance criteria passing
+  - All PRD acceptance criteria passing on staging
   - Zero critical or high severity bugs
-  - Integration tests passing
-  - Performance benchmarks met (API response <500ms p95, page load <3s)
-  - Analytics events verified (all events from tracking plan fire correctly)
+  - Integration tests passing on staging
+  - Performance benchmarks met on staging (API response <500ms p95, page load <3s)
+  - Analytics events verified on staging (all events from tracking plan fire correctly)
   - UI matches approved Figma designs
-- **Output:** Explicit "QA APPROVED" sign-off
-- **Blocks:** DevOps cannot deploy until approved
+- **Output:** Explicit "QA APPROVED" + "STAGING APPROVED" sign-off
+- **Blocks:** DevOps cannot promote staging → LIVE until approved
 
 ---
 
@@ -592,23 +681,25 @@ ROLLBACK STEPS:
 When creating tasks, use this dependency structure:
 
 ```
-Task 0:  ALL - Read memory + /last30days research (MAX 30 min)
-Task 1:  PM - Research existing products + Write PRD with "Solutions Evaluated" + analytics tracking plan
+Task 0:   ALL - Read memory + /last30days research (MAX 30 min)
+Task 0.1: DevOps - Create GitHub repo (if not exists) + branches (develop/staging/main) + protection rules
+Task 1:   PM - Research existing products + Write PRD with "Solutions Evaluated" + analytics tracking plan
 Task 1.5: Devil's Advocate - Review PRD (gaps? scope? assumptions? analytics plan?) ⚠️
   └─> Task 2: UX - Research UI kits + Create wireframes incl. ALL states (blockedBy: Task 1.5)
       Task 2.5: Devil's Advocate - Review designs (missing states? accessibility?) ⚠️
           Task 2.7: PM - Design Review gate 🔒 (approve designs before dev starts)
   └─> Task 3: Tech Lead - Research boilerplates + Design architecture (blockedBy: Task 1.5)
       Task 3.5: Devil's Advocate - Review architecture + tech choices ⚠️
-          └─> Task 4: Frontend - Build UI + implement analytics tracking (blockedBy: Task 2.7, Task 3.5)
-          └─> Task 5: Backend - Use existing libraries + Build APIs (blockedBy: Task 3.5)
-          └─> Task 6: Data - Use existing ORM + Write schemas (blockedBy: Task 3.5)
+          └─> Task 4: Frontend - Build UI + analytics (feature branches → PRs to develop) (blockedBy: Task 2.7, Task 3.5)
+          └─> Task 5: Backend - Build APIs (feature branches → PRs to develop) (blockedBy: Task 3.5)
+          └─> Task 6: Data - Write schemas (feature branches → PRs to develop) (blockedBy: Task 3.5)
               Task 6.5: Devil's Advocate - Code quality review on ALL PRs ⚠️
                   └─> Task 7: Security - Review (blockedBy: Task 5, Task 6, Task 6.5) 🔒
-                      └─> Task 8: QA - Functional + visual + performance + analytics validation (blockedBy: Task 4, Task 7) 🔒
-                          └─> Task 9: DevOps - Deploy + monitoring + alerting + rollback runbook (blockedBy: Task 8)
-                              └─> Task 10: ALL - Log learnings + update solutions-radar.md
-                                  └─> Task 11: CEO + Devil's Advocate - Retrospective + challenge report + memory validation
+                      └─> Task 8: DevOps - Deploy develop → STAGING (tag: v{x}-rc.{N}) (blockedBy: Task 7)
+                          └─> Task 9: QA - Validate ON STAGING (functional + visual + perf + analytics) 🔒 (blockedBy: Task 4, Task 8)
+                              └─> Task 10: DevOps - Promote staging → LIVE (tag: v{x}) + rollback runbook (blockedBy: Task 9)
+                                  └─> Task 11: ALL - Log learnings + update solutions-radar.md
+                                      └─> Task 12: CEO + Devil's Advocate - Retrospective + challenge report + memory validation
 ```
 
 ---
