@@ -50,20 +50,20 @@ Copy and paste this into Claude Code to start your development team:
 Create an agent team for software development using this structure:
 
 PROJECT: [YOUR PROJECT NAME HERE]
-DESCRIPTION: [1-2 sentence description]
+IDEA: [Even a single sentence is fine — the team will ask questions to understand]
 
 MCP SERVERS: Figma, Linear, GitHub (ensure all are connected via /mcp)
 
 Spawn 11 teammates with these roles:
 
-1. CEO/Management (Sonnet) - Strategic oversight, reviews progress on Linear and Figma
-2. PM (Sonnet) - Writes PRD, creates user stories on Linear, creates journey diagrams in FigJam
+1. CEO/Management (Sonnet) - Strategic oversight, leads project initiation questioning
+2. PM (Sonnet) - Assists initiation, writes PRD from PROJECT-BRIEF.md, creates user stories on Linear
 3. UX Designer (Sonnet) - Creates wireframes and UI designs in Figma, creates flow diagrams in FigJam
 4. Tech Lead (Sonnet) - Creates architecture diagrams in FigJam, defines API contracts, reviews GitHub PRs
-5. Frontend Dev (Sonnet) - Builds UI from Figma designs + API contract, creates GitHub PRs
-6. Backend Dev (Sonnet) - Builds APIs using API contract, creates GitHub PRs
-7. Data Engineer (Sonnet) - Schemas and migrations, creates GitHub PRs
-8. Devil's Advocate (Sonnet) - Challenges EVERY decision, reviews PRD/architecture/designs/code, creates challenge issues on Linear ⚠️ CONTINUOUS
+5. Frontend Dev (Sonnet) - Builds UI from Figma designs + API contract [FRESH AGENT per feature]
+6. Backend Dev (Sonnet) - Builds APIs using API contract [FRESH AGENT per endpoint group]
+7. Data Engineer (Sonnet) - Schemas and migrations [FRESH AGENT]
+8. Devil's Advocate (Sonnet) - Challenges EVERY decision, reviews PRD/architecture/designs/code ⚠️ CONTINUOUS
 9. Security Engineer (Sonnet) - Reviews code on GitHub, logs issues to Linear, HARD GATE before QA
 10. QA Lead (Sonnet) - Tests against PRD on Linear, validates UI against Figma, HARD GATE before deploy
 11. DevOps (Sonnet) - Manages GitHub releases, deploys only after Security + QA approval
@@ -77,11 +77,37 @@ GITHUB REPO & DEPLOYMENT:
 - QA validates on STAGING before anything reaches LIVE
 - Version tags: staging = v{x}-rc.{N}, live = v{x}
 
+PROJECT INITIATION (FIRST — before anything else):
+- CEO + PM question the user collaboratively (NOT an interrogation)
+- Extract: What they're building, Why, Who it's for, What "done" looks like
+- Challenge vagueness: "Good UX" → "Good how?" / "Users" → "Which users?"
+- Make abstract concrete: "Walk me through using this"
+- Output: PROJECT-BRIEF.md at ~/.claude/project-briefs/{project-name}.md
+- User confirms "yes, that captures what I want" before moving on
+- For brownfield: Tech Lead scans codebase BEFORE questioning
+
+PER-PHASE DISCUSSION (before each dev phase):
+- Identify 3-5 gray areas specific to the phase (not generic categories)
+- Present to user — they pick which to discuss
+- Ask 3-4 focused questions per area with concrete options + recommendations
+- Lock decisions in PHASE-CONTEXT.md — devs never guess
+- Guard scope: discussion = HOW to implement, never adds new features
+- Skip for: pure infrastructure, clear-cut from PRD, internal refactors
+
+CONTEXT MANAGEMENT:
+- Orchestrator stays under 30% context — spawns fresh agents for heavy work
+- Dev agents spawned fresh per feature/page/endpoint (prevents context rot)
+- Agents monitor context: GREEN (<60%) | YELLOW (60-70%) | ORANGE (70% wrap up) | RED (80% STOP)
+- Every task = one atomic git commit (enables git bisect, individual revert)
+- Every session ends with STATUS.md handoff (resume without losing progress)
+- Deviation rules: auto-fix bugs (3 tries), STOP for architecture decisions
+
 WORKFLOW ENFORCEMENT:
 - DevOps ASKS deployment platform choice (Vercel/Railway/AWS/Fly.io/other) at project start
 - DevOps creates GitHub repo + branches (develop/staging/main) + protection rules
 - DevOps configures chosen deployment platform (link repo, staging env, production env)
-- PM must finish PRD (incl. analytics tracking plan) before UX and Tech Lead can start
+- PROJECT INITIATION must complete FIRST — CEO + PM question user → PROJECT-BRIEF.md
+- PM writes PRD from PROJECT-BRIEF.md (incl. analytics tracking plan) before UX and Tech Lead can start
 - PM creates a NEW dedicated Linear project (search first - if exists, confirm with CEO whether to reuse or create new; NEVER add to general/shared project)
 - PM creates milestones (Requirements → Development → Security → Staging & QA → Production) and issues from user stories
 - Devil's Advocate reviews PRD BEFORE UX and Tech Lead start (challenges scope, gaps, assumptions)
@@ -89,7 +115,9 @@ WORKFLOW ENFORCEMENT:
 - PM MUST approve designs before Frontend Dev starts (DESIGN REVIEW GATE 🔒)
 - Tech Lead CREATES architecture diagrams in FigJam
 - Devil's Advocate reviews architecture + designs BEFORE development starts
-- All devs work on feature branches → PRs to develop
+- PHASE DISCUSSION per dev phase — lock gray areas in PHASE-CONTEXT.md before devs start
+- All devs spawned as FRESH AGENTS (context management) on feature branches → PRs to develop
+- Each dev task = one atomic git commit (conventional format: feat/fix/refactor)
 - Devil's Advocate reviews ALL code PRs for quality BEFORE Security review
 - Security Engineer MUST approve before deploy to staging (HARD GATE 🔒)
 - DevOps deploys develop → STAGING after Security approval
@@ -113,7 +141,7 @@ RESEARCH-FIRST (MANDATORY - use /last30days skill):
 - Set up watchlist: `last30 watch [topic] every [interval]` for continuous tracking
 
 Create tasks with proper dependencies to enforce this workflow.
-Start with research phase, then PM writing the PRD and creating the Linear project.
+Start with PROJECT INITIATION (CEO + PM questioning the user), then research, then PRD.
 ```
 
 ## Example: Building a New Feature
@@ -122,23 +150,25 @@ Start with research phase, then PM writing the PRD and creating the Linear proje
 Create an agent team for software development using the template at ~/.claude/team-templates/dev-team-config.md
 
 PROJECT: User Authentication System
-DESCRIPTION: Add OAuth2 authentication with Google and GitHub providers, including user profile management and session handling.
+IDEA: I want OAuth2 authentication with Google and GitHub, plus user profiles.
 
 Spawn all 11 teammates as defined in the template.
 
 WORKFLOW:
+-1. CEO + PM: PROJECT INITIATION — question me about auth requirements, user types, session needs → PROJECT-BRIEF.md
 0. ALL: Read memory + Research existing auth solutions (Auth.js, Lucia, Clerk, Supabase Auth, etc.)
 0.1. DevOps: ASK "Where do you want to deploy?" + Create GitHub repo + branches + configure deployment platform
-1. PM: Evaluate existing auth services vs custom build. Write PRD with "Solutions Evaluated" + analytics tracking plan. Create NEW Linear project.
-1.5. Devil's Advocate: Review PRD - are requirements complete? Edge cases covered? Right solution chosen? Analytics plan solid?
-2. UX Designer: Research existing auth UI kits in Figma Community. Create login/signup wireframes incl. ALL states (wait for PRD + DA review)
+1. PM: Write PRD from PROJECT-BRIEF.md + "Solutions Evaluated" + analytics tracking plan. Create NEW Linear project.
+1.5. Devil's Advocate: Review PRD - are requirements complete? Edge cases covered? Right solution chosen?
+2. UX Designer: Research existing auth UI kits. Create login/signup wireframes incl. ALL states (wait for PRD + DA review)
 2.5. PM: Design Review gate - approve designs before dev starts 🔒
-3. Tech Lead: Evaluate auth libraries (Auth.js, Passport, Lucia). Create architecture in FigJam, define API contracts (wait for PRD + DA review)
+3. Tech Lead: Evaluate auth libraries (Auth.js, Passport, Lucia). Create architecture in FigJam (wait for PRD + DA review)
 3.5. Devil's Advocate: Review architecture - scalability? Over-engineering? Better alternatives?
-4. Frontend Dev: Build login UI + analytics on feature branches → PRs to develop (wait for Design Review + Tech Lead + DA review)
-5. Backend Dev: Use chosen auth library. Implement endpoints on feature branches → PRs to develop (wait for API contract + DA review)
-6. Data Engineer: Use existing ORM. Design user schema on feature branches → PRs to develop (wait for architecture + DA review)
-6.5. Devil's Advocate: Code quality review on ALL PRs - API contract compliance, test coverage, naming
+3.7. PHASE DISCUSSION: Lock gray areas for dev (session handling? token storage? error messages?) → PHASE-CONTEXT.md
+4. Frontend Dev [FRESH AGENT]: Build login UI + analytics (wait for Design Review + PHASE-CONTEXT.md)
+5. Backend Dev [FRESH AGENT]: Use chosen auth library. Implement endpoints (wait for PHASE-CONTEXT.md)
+6. Data Engineer [FRESH AGENT]: Use existing ORM. Design user schema (wait for PHASE-CONTEXT.md)
+6.5. Devil's Advocate [FRESH AGENT]: Code quality review on ALL PRs
 7. Security Engineer: Review against OWASP checklist (HARD GATE 🔒, wait for DA code review)
 8. DevOps: Deploy develop → STAGING (tag: v{x}-rc.{N}) (wait for Security approval)
 9. QA Lead: Validate ON STAGING - all auth flows + performance + analytics (HARD GATE 🔒)
@@ -146,10 +176,12 @@ WORKFLOW:
 11. ALL: Log learnings + update solutions-radar.md
 12. CEO + Devil's Advocate: Retrospective + final challenge report + memory quality validation
 
-RESEARCH-FIRST: Every agent evaluates existing solutions before building. No custom code without Tech Lead justification.
+INITIATION: CEO + PM question me first. No PRD without PROJECT-BRIEF.md.
+PHASE DISCUSSION: Lock gray areas before each dev phase. Devs never guess.
+CONTEXT: Dev agents spawned fresh. Atomic commits. STATUS.md handoff.
+RESEARCH-FIRST: Every agent evaluates existing solutions. No custom code without Tech Lead justification.
 MEMORY: All agents read ~/.claude/team-memory/ before starting. All agents log learnings after each task.
-
-Enforce HARD GATES: Design Review (PM approves before dev), Security (before QA), QA (before deploy).
+HARD GATES: Design Review (PM), Security (before QA), QA (before deploy).
 ```
 
 ## Example: Full Product Build

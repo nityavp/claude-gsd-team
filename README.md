@@ -25,10 +25,12 @@ This template configures Claude Code to orchestrate a complete software developm
 ### Workflow Overview
 
 ```
+Phase -1:  INITIATION — CEO + PM question user → PROJECT-BRIEF.md
+Phase -0.5: DISCUSSION — Per-phase gray areas → PHASE-CONTEXT.md (before each dev phase)
 Phase 0:   ALL read memory + research (/last30days)        MAX 30 min
 Phase 0.1: DevOps creates GitHub repo + branches (develop/staging/main)
-Phase 1:   PM writes PRD -> DA reviews -> UX + Tech Lead   (parallel after DA)
-Phase 2:   DA reviews designs/arch -> Design Review gate -> Devs build (on feature branches)
+Phase 1:   PM writes PRD (from brief) -> DA reviews -> UX + Tech Lead (parallel after DA)
+Phase 2:   DA reviews designs/arch -> Design Review gate -> Devs build [FRESH AGENTS]
 Phase 3:   DA code review -> Security gate
 Phase 4:   DevOps deploys to STAGING -> QA validates on staging
 Phase 5:   DevOps promotes staging -> LIVE -> ALL log learnings
@@ -88,13 +90,13 @@ Paste this into Claude Code (replace the placeholder values):
 Create an agent team for software development using the template at ~/.claude/team-templates/dev-team-config.md
 
 PROJECT: [YOUR PROJECT NAME]
-DESCRIPTION: [1-2 sentence description]
+IDEA: [Even a single sentence — the team will ask questions to understand]
 
 MCP SERVERS: Figma, Linear, GitHub (ensure all connected via /mcp)
 
 Spawn all 11 teammates as defined in the template.
 Create tasks with proper dependencies to enforce the workflow.
-Start with research phase, then PM writing the PRD.
+Start with PROJECT INITIATION (CEO + PM question me about the project).
 ```
 
 ## Repository Structure
@@ -102,11 +104,16 @@ Start with research phase, then PM writing the PRD.
 ```
 claude-agent-team/
   team-templates/
-    dev-team-config.md              # Main team configuration (747 lines)
+    dev-team-config.md              # Main team configuration
     QUICKSTART.md                   # Quick start guide with examples
     PROJECT-CLAUDE-TEMPLATE.md      # Per-project CLAUDE.md template
     research-first-mindset.md       # Research-first methodology docs
     team-memory-system.md           # Memory system specification
+    initiation/                     # NEW: Initiation & discussion workflows
+      project-initiation.md         # Phase -1: Dream extraction → PROJECT-BRIEF.md
+      phase-discussion.md           # Per-phase gray area locking → PHASE-CONTEXT.md
+    hooks/                          # NEW: Context management
+      context-monitor.md            # Context rot prevention, fresh agents, deviation rules
   team-memory/
     learnings.md                    # Cross-project learnings (append-only)
     mistakes.md                     # Mistakes with root causes
@@ -133,6 +140,24 @@ claude-agent-team/
 ```
 
 ## Key Features
+
+### Project Initiation & Phase Discussion (NEW)
+
+No more jumping straight to PRD. The team asks questions first:
+
+- **Project Initiation (Phase -1):** CEO + PM collaboratively question the user to extract their vision. Challenges vagueness, makes abstract concrete, captures What/Why/Who/Done. Produces PROJECT-BRIEF.md that feeds the PRD.
+- **Phase Discussion (Phase -0.5):** Before each dev phase, identifies gray areas (specific to that phase, not generic), presents options with recommendations, and locks decisions in PHASE-CONTEXT.md. Developers never guess.
+- **Scope guard:** Discussion clarifies HOW to implement, never adds new capabilities. Scope creep is captured as "deferred ideas" for future phases.
+
+### Context Management & Fresh Agents (NEW)
+
+Prevents context rot — the quality degradation when LLMs fill their context window:
+
+- **Orchestrator pattern:** Main conversation stays under 30% context, spawns fresh agents for heavy work
+- **Context monitoring:** GREEN (<60%) → YELLOW (60-70%) → ORANGE (70% wrap up) → RED (80% STOP)
+- **Atomic commits:** Every task = one git commit with conventional format
+- **Session handoff:** STATUS.md captures progress so fresh agents resume seamlessly
+- **Deviation rules:** Auto-fix bugs (3 tries), auto-add small dependencies, STOP for architecture decisions
 
 ### Persistent Self-Learning Memory
 

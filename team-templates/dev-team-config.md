@@ -8,13 +8,20 @@ This is a reusable team template for software development projects with built-in
 11 ROLES: CEO | PM | UX | Tech Lead | Frontend | Backend | Data | Devil's Advocate | Security | QA | DevOps
 
 WORKFLOW IN 30 SECONDS:
+  Phase -1: INITIATION — CEO + PM question user, extract vision → PROJECT-BRIEF.md
+  Phase -0.5: DISCUSSION — Per-phase gray areas, lock decisions → PHASE-CONTEXT.md
   Phase 0: ALL read memory + research (/last30days) → MAX 30 min
   Phase 0.1: DevOps creates GitHub repo (if not exists) with staging/main branches
-  Phase 1: PM writes PRD → DA reviews → UX designs + Tech Lead architects (parallel)
+  Phase 1: PM writes PRD (from PROJECT-BRIEF.md) → DA reviews → UX + Tech Lead (parallel)
   Phase 2: DA reviews designs/arch → Design Review gate (PM approves) → Devs build (on develop branch)
   Phase 3: DA code review → Security gate 🔒 → QA gate 🔒 (includes perf testing)
   Phase 4: DevOps deploys to STAGING → QA validates on staging → Promote to LIVE
   Phase 5: ALL log learnings
+
+CONTEXT MANAGEMENT:
+  Orchestrator stays under 30% context — spawns fresh agents for heavy work
+  Agents: GREEN (<60%) | YELLOW (60-70%) | ORANGE (70% wrap up) | RED (80% STOP)
+  Every task = atomic git commit. Every session ends with STATUS.md handoff.
 
 ENVIRONMENTS:
   develop  → Active development (feature branches merge here)
@@ -26,7 +33,9 @@ ENVIRONMENTS:
   🔒 Security (blocks QA)
   🔒 QA (blocks deploy)
 
+INITIATION: No PRD without PROJECT-BRIEF.md. No phase dev without PHASE-CONTEXT.md.
 RESEARCH-FIRST: Never build from scratch. Check solutions-radar.md → /last30days → existing libraries.
+CONTEXT: Spawn fresh agents for heavy work. Monitor usage. Save state before limits hit.
 MEMORY: Read ~/.claude/team-memory/ before starting. Write learnings after every task.
 ```
 
@@ -268,12 +277,91 @@ Tech Lead is the gatekeeper - no "build from scratch" without documented justifi
 
 ---
 
+## Project Initiation (MANDATORY — Phase -1)
+
+**Full docs:** `~/.claude/team-templates/initiation/project-initiation.md`
+
+Before ANYTHING else, CEO + PM question the user to extract their vision. No scripts, no checklists — collaborative thinking that produces a PROJECT-BRIEF.md.
+
+**Process:**
+1. CEO leads open-ended questioning (strategic: why, who, what success looks like)
+2. PM assists (product: features, user journeys, scope boundaries)
+3. Devil's Advocate observes silently, notes concerns for later
+4. Questions sharpen until four things are clear: What, Why, Who, Done
+5. Output: `~/.claude/project-briefs/{project-name}.md`
+
+**Rules:**
+- Challenge vagueness: "Good UX" → "Good how?" / "Users" → "Which users?"
+- Make abstract concrete: "Walk me through using this"
+- Follow energy, not a script
+- Never ask about tech stack before understanding the idea
+- User confirms "yes, that captures what I want" before moving on
+
+**For brownfield projects:** Tech Lead scans existing codebase BEFORE questioning, so discussion is grounded in what exists.
+
+---
+
+## Phase Discussion (Per-Phase — Phase -0.5)
+
+**Full docs:** `~/.claude/team-templates/initiation/phase-discussion.md`
+
+Before planning EACH phase, identify gray areas and lock decisions. Developers should never guess.
+
+**Process:**
+1. Read the phase goal from PRD/roadmap
+2. Identify 3-5 specific gray areas (not generic categories)
+3. Present to user — they pick which to discuss
+4. For each: ask 3-4 questions with concrete options + recommendations
+5. Capture decisions in PHASE-CONTEXT.md
+6. Guard against scope creep: discussion = HOW, never WHAT to add
+
+**Output:** `~/.claude/project-briefs/{project-name}/phase-{N}-context.md`
+
+**Skip when:** Pure infrastructure, already clear from PRD, internal refactor.
+
+**Downstream:** Every developer reads PHASE-CONTEXT.md before starting. If they hit a decision not covered, they escalate — never guess.
+
+---
+
+## Context Management & Fresh Agents
+
+**Full docs:** `~/.claude/team-templates/hooks/context-monitor.md`
+
+The biggest reliability improvement for multi-agent workflows. Prevents context rot.
+
+**Orchestrator pattern:**
+- Main conversation stays under 30% context usage
+- Heavy work (coding, reviewing, testing) is spawned as fresh subagents
+- Each subagent gets a full context window with zero accumulated garbage
+- Pass file paths to agents, not file contents
+
+**Context levels for all agents:**
+```
+0-60%   GREEN   — Work normally
+60-70%  YELLOW  — Caution, be concise
+70-80%  ORANGE  — Wrap up current task, commit, write STATUS.md
+80%+    RED     — STOP immediately, save state, hand off
+```
+
+**Deviation rules for spawned agents:**
+- Bug found → auto-fix (max 3 attempts)
+- Missing dependency → auto-add if <5 min
+- Blocker → auto-resolve (max 3 attempts)
+- Architecture decision needed → STOP, escalate to Tech Lead/PM
+
+**Atomic commits:** Every task = one git commit. Never lose work to context limits.
+
+**Session handoff:** Every session ends with STATUS.md documenting what's done, what remains, and how to resume.
+
+---
+
 ## Workflow Dependencies
 
 ```
-[ALL] Read memory + /last30days research (MAX 30 min time-box)
-  [DevOps] Create GitHub repo (if not exists) + set up branches (develop/staging/main) + protection rules
-    └─→ PM (PRD + "Solutions Evaluated" + analytics tracking plan)
+[CEO + PM] PROJECT INITIATION — question user → PROJECT-BRIEF.md (Phase -1)
+  [ALL] Read memory + /last30days research (MAX 30 min time-box)
+    [DevOps] Create GitHub repo (if not exists) + set up branches (develop/staging/main) + protection rules
+      └─→ PM (PRD from PROJECT-BRIEF.md + "Solutions Evaluated" + analytics tracking plan)
         └─→ Devil's Advocate reviews PRD (challenges scope, gaps, assumptions)
             ├─→ UX Designer (wireframes using existing UI kits)
             │     └─→ Devil's Advocate reviews designs (missing states? matches PRD?)
@@ -727,7 +815,7 @@ LIVE/PRODUCTION DEPLOY:
    Create an agent team using the software development team template at ~/.claude/team-templates/dev-team-config.md
 
    Project: [YOUR PROJECT NAME]
-   Requirements: [HIGH-LEVEL DESCRIPTION]
+   Idea: [BRIEF DESCRIPTION — even a single sentence is fine]
 
    Spawn all 11 teammates:
    - CEO/Management
@@ -742,13 +830,16 @@ LIVE/PRODUCTION DEPLOY:
    - QA Lead
    - DevOps
 
-   Start with PM writing the PRD.
+   Start with PROJECT INITIATION (CEO + PM question me about the project).
    ```
 
 2. **Team will follow workflow automatically:**
-   - PM writes PRD first
+   - CEO + PM question the user first (Project Initiation → PROJECT-BRIEF.md)
+   - PM writes PRD from the brief (not from scratch)
+   - Per-phase discussions lock gray areas before development
+   - Fresh agents spawned for heavy dev work (context management)
    - UX and Tech Lead wait for PRD
-   - Devs wait for their inputs
+   - Devs wait for their inputs + PHASE-CONTEXT.md
    - Security gate enforced before QA
    - QA gate enforced before deploy
 
@@ -764,18 +855,20 @@ LIVE/PRODUCTION DEPLOY:
 When creating tasks, use this dependency structure:
 
 ```
+Task -1:  CEO + PM - PROJECT INITIATION: Question user, extract vision → PROJECT-BRIEF.md
 Task 0:   ALL - Read memory + /last30days research (MAX 30 min)
 Task 0.1: DevOps - Create GitHub repo (if not exists) + branches (develop/staging/main) + protection rules
-Task 1:   PM - Research existing products + Write PRD with "Solutions Evaluated" + analytics tracking plan
+Task 1:   PM - Write PRD from PROJECT-BRIEF.md + "Solutions Evaluated" + analytics tracking plan
 Task 1.5: Devil's Advocate - Review PRD (gaps? scope? assumptions? analytics plan?) ⚠️
   └─> Task 2: UX - Research UI kits + Create wireframes incl. ALL states (blockedBy: Task 1.5)
       Task 2.5: Devil's Advocate - Review designs (missing states? accessibility?) ⚠️
           Task 2.7: PM - Design Review gate 🔒 (approve designs before dev starts)
   └─> Task 3: Tech Lead - Research boilerplates + Design architecture (blockedBy: Task 1.5)
       Task 3.5: Devil's Advocate - Review architecture + tech choices ⚠️
-          └─> Task 4: Frontend - Build UI + analytics (feature branches → PRs to develop) (blockedBy: Task 2.7, Task 3.5)
-          └─> Task 5: Backend - Build APIs (feature branches → PRs to develop) (blockedBy: Task 3.5)
-          └─> Task 6: Data - Write schemas (feature branches → PRs to develop) (blockedBy: Task 3.5)
+      Task 3.7: PHASE DISCUSSION per dev phase — lock gray areas → PHASE-CONTEXT.md (blockedBy: Task 3.5)
+          └─> Task 4: Frontend - Build UI + analytics [FRESH AGENT] (blockedBy: Task 2.7, Task 3.7)
+          └─> Task 5: Backend - Build APIs [FRESH AGENT] (blockedBy: Task 3.7)
+          └─> Task 6: Data - Write schemas [FRESH AGENT] (blockedBy: Task 3.7)
               Task 6.5: Devil's Advocate - Code quality review on ALL PRs ⚠️
                   └─> Task 7: Security - Review (blockedBy: Task 5, Task 6, Task 6.5) 🔒
                       └─> Task 8: DevOps - Deploy develop → STAGING (tag: v{x}-rc.{N}) (blockedBy: Task 7)
@@ -916,5 +1009,22 @@ This template is your starting point. Customize by:
 - Changing workflow (e.g., parallel backend services)
 - Modifying approval criteria
 - Extending the memory system with new knowledge categories
+- Adjusting initiation depth (skip for small features, deep-dive for products)
+- Tweaking context thresholds (lower RED threshold for complex projects)
+- Adding phase discussion areas specific to your domain
 
 Save your customizations as new templates in `~/.claude/team-templates/`
+
+---
+
+## Additional Documentation
+
+| File | Purpose |
+|------|---------|
+| `initiation/project-initiation.md` | Full project initiation workflow (Phase -1) |
+| `initiation/phase-discussion.md` | Per-phase gray area discussion workflow |
+| `hooks/context-monitor.md` | Context management, fresh agents, deviation rules |
+| `research-first-mindset.md` | Research-first methodology |
+| `team-memory-system.md` | Persistent memory specification |
+| `QUICKSTART.md` | Quick start guide with examples |
+| `PROJECT-CLAUDE-TEMPLATE.md` | Per-project CLAUDE.md template |
