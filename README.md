@@ -53,6 +53,30 @@ Phase 5:   DevOps promotes staging -> LIVE -> ALL log learnings
 | QA | HARD | QA Lead | Cannot promote staging to LIVE without QA approval |
 | Devil's Advocate | SOFT (continuous) | Devil's Advocate | Blocker challenges must be addressed before proceeding |
 
+## Architecture Diagrams
+
+Interactive FigJam diagrams — click to open and edit in Figma.
+
+### Full Workflow Pipeline
+[![Full Architecture](https://img.shields.io/badge/FigJam-Full%20Workflow%20Pipeline-blue?logo=figma)](https://www.figma.com/online-whiteboard/create-diagram/04ae5832-3c0e-41f9-8b6c-10d0e6f0f088?utm_source=other&utm_content=edit_in_figjam)
+
+Phase -1 (Initiation) → Research → Infrastructure → PRD → Design → Discussion → Build → Quality → Ship
+
+### Role Interactions + Gates
+[![Role Interactions](https://img.shields.io/badge/FigJam-Role%20Interactions%20%2B%20Gates-red?logo=figma)](https://www.figma.com/online-whiteboard/create-diagram/10dfb685-5377-4e8d-9b6e-2cbea2fa92be?utm_source=other&utm_content=edit_in_figjam)
+
+All 11 roles, what they produce, how they connect. 3 hard gates (red) + Devil's Advocate continuous (yellow).
+
+### Context Management + Fresh Agents
+[![Context Management](https://img.shields.io/badge/FigJam-Context%20Management%20%2B%20Fresh%20Agents-purple?logo=figma)](https://www.figma.com/online-whiteboard/create-diagram/0380ca81-5fac-466d-925f-9576c3b50415?utm_source=other&utm_content=edit_in_figjam)
+
+Orchestrator pattern, GREEN/YELLOW/ORANGE/RED context levels, deviation rules, what gets spawned fresh per role.
+
+### Memory System + File Outputs
+[![Memory System](https://img.shields.io/badge/FigJam-Memory%20System%20%2B%20File%20Outputs-green?logo=figma)](https://www.figma.com/online-whiteboard/create-diagram/cf4cec3f-d0f3-4c38-9b71-2f2b18e4fede?utm_source=other&utm_content=edit_in_figjam)
+
+What each phase produces, persistent memory structure, self-learning loop across projects.
+
 ## Quick Start
 
 ### Prerequisites
@@ -69,8 +93,8 @@ Copy the template files to your Claude Code configuration:
 
 ```bash
 # Clone the repo
-git clone https://github.com/nityavp/claude-agent-team.git
-cd claude-agent-team
+git clone https://github.com/nityavp/claude-gsd-team.git
+cd claude-gsd-team
 
 # Copy templates
 cp -r team-templates/ ~/.claude/team-templates/
